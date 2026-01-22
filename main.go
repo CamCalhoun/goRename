@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,14 +19,45 @@ type EpisodeMatch struct {
 }
 
 type RenamePlan struct {
-	Original string
-	Proposed string
-	Match    EpisodeMatch
+	Original  string
+	Proposed  string
+	Episode   EpisodeMatch
+	CanRename bool
+	Reason    string
 }
 
 func main() {
+	// Flags
+	seriesPtr := flag.String("series", "", "string representing series title")
+	flag.Parse()
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	apiKey := os.Getenv("TVDB_API_KEY")
+	if apiKey == "" {
+		log.Fatal("TVDB_API_KEY not set")
+	}
+
+	client := NewTVDBClient(apiKey)
+
+	err = client.Login()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("renamer started...")
+
+	if *seriesPtr == "" {
+		fmt.Println("ERROR: --series flag is required")
+		flag.Usage()
+		os.Exit(1)
+	}
+	fmt.Println("Series Title: ", *seriesPtr)
 	entries, err := os.ReadDir(".")
+
 	if err != nil {
 		log.Fatal(err)
 	}
