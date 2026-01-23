@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/joho/godotenv"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -33,33 +32,51 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		printError(err)
+		os.Exit(1)
 	}
 
 	apiKey := os.Getenv("TVDB_API_KEY")
 	if apiKey == "" {
-		log.Fatal("TVDB_API_KEY not set")
+		printError(err)
+		os.Exit(1)
 	}
 
 	client := NewTVDBClient(apiKey)
 
 	err = client.Login()
 	if err != nil {
-		log.Fatal(err)
+		printError(err)
+		os.Exit(1)
 	}
 
-	fmt.Println("renamer started...")
-
 	if *seriesPtr == "" {
-		fmt.Println("ERROR: --series flag is required")
+		fmt.Println(ErrorStyle.Render("Error: --series flag is required"))
 		flag.Usage()
 		os.Exit(1)
 	}
-	fmt.Println("Series Title: ", *seriesPtr)
+
+	var series *Series
+	series, err = client.searchSeries(*seriesPtr)
+	if err != nil {
+		printError(err)
+		os.Exit(1)
+	}
+	fmt.Println()
+	fmt.Println(
+		HighlightStyle.Render(
+			fmt.Sprintf(
+				"Selected: %s %s",
+				series.Name,
+				series.Year,
+			),
+		),
+	)
 	entries, err := os.ReadDir(".")
 
 	if err != nil {
-		log.Fatal(err)
+		printError(err)
+		os.Exit(1)
 	}
 
 	for _, entry := range entries {
@@ -126,4 +143,9 @@ func matchEpisodeNumber(filename string) EpisodeMatch {
 		Filename: filename,
 		Found:    false,
 	}
+}
+
+func printError(err error) {
+	fmt.Println()
+	fmt.Println(ErrorStyle.Render("Error: " + err.Error()))
 }
