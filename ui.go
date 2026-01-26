@@ -20,4 +20,17 @@ var (
 	ErrorStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("196"))
+
+	OldStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(241)).
+			Strikethrough(true)
+
+	NewStyle = HighlightStyle
+
+	arrowStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("69"))
+
+	SuccessStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("46")).
+			Bold(true)
 )
