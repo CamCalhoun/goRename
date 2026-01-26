@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/joho/godotenv"
@@ -175,8 +176,10 @@ func main() {
 	for _, idx := range selected {
 		rp := renamePlans[idx]
 
+		newName := sanitizeFilename(rp.NewFileName)
+
 		oldPath := filepath.Join(*dir, rp.OldFileName)
-		newPath := filepath.Join(*dir, rp.NewFileName)
+		newPath := filepath.Join(*dir, newName)
 
 		if err := os.Rename(oldPath, newPath); err != nil {
 			fmt.Println(ErrorStyle.Render("✖  " + rp.OldFileName))
@@ -196,7 +199,7 @@ func main() {
 
 func matchEpisodeNumber(filename string) EpisodeMatch {
 	strictExp := regexp.MustCompile(`(?:\s|-)(\d{1,4})(?:\s|-)`)
-	looseExp := regexp.MustCompile(`\b\d{1,4}\b`)
+	looseExp := regexp.MustCompile(`\d{1,4}\b`)
 
 	// Try strict match first
 	if strictMatch := strictExp.FindStringSubmatch(filename); len(strictMatch) >= 2 {
@@ -277,4 +280,12 @@ func truncate(s string, max int) string {
 		return s[:max]
 	}
 	return s[:max-3] + "..."
+}
+
+func sanitizeFilename(name string) string {
+	illegal := []string{`<`, `>`, `:`, `"`, `/`, `\`, `|`, `?`, `*`}
+	for _, ch := range illegal {
+		name = strings.ReplaceAll(name, ch, "")
+	}
+	return strings.TrimSpace(name)
 }
